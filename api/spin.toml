@@ -1,0 +1,21 @@
+spin_manifest_version = 2
+
+[application]
+name = "api"
+version = "0.1.0"
+authors = ["Tom Christian <tom@sparkgeo.com>"]
+description = ""
+
+[application.trigger.http]
+base = "/api"
+
+[[trigger.http]]
+route = "/..."
+component = "api"
+
+[component.api]
+source = "target/wasm32-wasi/release/api.wasm"
+allowed_outbound_hosts = []
+[component.api.build]
+command = "cargo build --target wasm32-wasi --release"
+watch = ["src/**/*.rs", "Cargo.toml"]
