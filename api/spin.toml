@@ -16,6 +16,7 @@ component = "api"
 [component.api]
 source = "target/wasm32-wasi/release/api.wasm"
 allowed_outbound_hosts = ["https://tchristian-wasm-data.s3.us-west-2.amazonaws.com:443"]
+environment = { JWT_SECRET = "yN4hHktE71QE0RJIq61gyMLUUsSuOqjdYavV3NOdo24=" }
 [component.api.build]
 command = "cargo build --target wasm32-wasi --release"
 watch = ["src/**/*.rs", "Cargo.toml"]
