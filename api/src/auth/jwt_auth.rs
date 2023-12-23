@@ -4,6 +4,7 @@ use hmac::{ Hmac, Mac };
 use jwt::{ SignWithKey, VerifyWithKey };
 use sha2::Sha256;
 use std::collections::BTreeMap;
+use crate::http_util::permit_cors;
 
 type HmacSha256 = Hmac<Sha256>;
 
@@ -31,16 +32,13 @@ pub fn create_token() -> http::Response<Vec<u8>> {
     claims.insert("exp", exp.to_string());
     let key = get_jwt_key();
     let token = claims.sign_with_key(key).unwrap();
-    http::Response
-        ::builder()
+    permit_cors(
+        http::Response::builder()
         .status(204)
         .header("access_token", token)
-        .header("Access-Control-Allow-Origin", "*")
-        .header("Access-Control-Allow-Methods", "*")
-        .header("Access-Control-Allow-Headers", "*")
-        .header("Access-Control-Expose-Headers", "Access_token")
-        .body("".as_bytes().to_vec())
-        .unwrap()
+    )
+    .body("".as_bytes().to_vec())
+    .unwrap()
 }
 
 pub fn validate_token(token_header_str: &str) -> Result<(), AuthFailure> {

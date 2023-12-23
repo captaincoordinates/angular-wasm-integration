@@ -12,7 +12,9 @@ export class ImageProcessorService {
   public invoke(username: string, password: string): void {
     const handle = WasmImageProcessor.Processor.new();
     handle.authenticate(username, password).then(() => {
-      handle.greet();
+      handle.fetch_image(4).then(() => {
+        
+      });
     });
   }
 }

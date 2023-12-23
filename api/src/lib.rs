@@ -1,7 +1,7 @@
 use spin_sdk::http::{ IntoResponse, Request, Method, send, Response };
 use spin_sdk::http_component;
 use regex::Regex;
-use http_util::{ QueryString, Value };
+use http_util::{ QueryString, Value, permit_cors };
 use sentinel2::{ Band, BandIdentifier };
 use auth::{ create_token, validate_token, AuthFailure };
 
@@ -15,6 +15,7 @@ const IMG_BASE_HREF: &str = "https://tchristian-wasm-data.s3.us-west-2.amazonaws
 enum ApiBehaviour<'req> {
     Get(BandIdentifier<'req>),
     CreateToken,
+    PermitCors,
     NotFound,
 }
 
@@ -22,7 +23,10 @@ enum ApiBehaviour<'req> {
 async fn handle_api(req: Request) -> anyhow::Result<impl IntoResponse> {
     println!("Handling request to {:?}", req.header("spin-full-url"));
     match api_from_request(&req).await {
-        ApiBehaviour::CreateToken => { Ok(create_token()) }
+        ApiBehaviour::CreateToken => { Ok(create_token()) },
+        ApiBehaviour::PermitCors => {
+            Ok(permit_cors(http::Response::builder().status(204)).body("".as_bytes().to_vec())?)
+        },
         not_create_token => {
             if let Some(header_value) = req.header("Authorization") {
                 match validate_token(header_value.as_str().unwrap()) {
@@ -63,7 +67,7 @@ async fn handle_api(req: Request) -> anyhow::Result<impl IntoResponse> {
             } else {
                 Ok(http::Response::builder().status(401).body("Missing Token".as_bytes().to_vec())?)
             }
-        }
+        },
     }
 }
 
@@ -91,7 +95,10 @@ async fn api_from_request<'req>(req: &'req Request) -> ApiBehaviour<'req> {
                 return ApiBehaviour::CreateToken;
             }
             ApiBehaviour::NotFound
-        }
+        },
+        Method::Options => {
+            ApiBehaviour::PermitCors
+        },
         _ => { ApiBehaviour::NotFound }
     }
 }
@@ -107,7 +114,7 @@ async fn get_image<'req>(identifier: &'req BandIdentifier<'req>) -> http::Respon
                     builder = builder.header(header_entry.0, header_value_str);
                 }
             }
-            return builder.body(response.body().to_vec()).unwrap();
+            return permit_cors(builder).body(response.body().to_vec()).unwrap();
         },
         _ => {
             http::Response::builder()

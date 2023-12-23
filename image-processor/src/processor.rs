@@ -3,6 +3,8 @@ use crate::utils::set_panic_hook;
 use reqwest;
 use wasm_bindgen::prelude::*;
 use serde_json::json;
+use image::io::Reader as ImageReader;
+use std::io::Cursor;
 
 #[wasm_bindgen]
 pub struct Processor {
@@ -38,6 +40,24 @@ impl Processor {
             }
         } else {
             wasm_bindgen::throw_str("Problem calling backend API")
+        }
+    }
+
+    pub async fn fetch_image(&self, band: u8) {
+        if let Ok(response) = self.http_client
+            .get(&format!("http://localhost:3000/api/T09UXA_20231210T194821?band={:}", band))
+            .header("Authorization", &format!("Bearer {:}", self.jwt.clone().unwrap()))
+            .send()
+            .await {
+            if response.status().is_success() {
+                let bytes = response.bytes().await.unwrap();
+                let img = ImageReader::new(Cursor::new(bytes)).with_guessed_format().unwrap().decode().unwrap();
+                console_log(&format!("dimensions: {:}x{:}", img.width(), img.height()));
+            } else {
+                wasm_bindgen::throw_str(&format!("error fetching image band {:}", band));
+            }
+        } else {
+            wasm_bindgen::throw_str(&format!("error fetching image band {:}", band));
         }
     }
 
