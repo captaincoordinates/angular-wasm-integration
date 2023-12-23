@@ -7,11 +7,14 @@ Proof of concept to demonstrate integration of a WASM component, written in Rust
 
 # Development
 
-Requires npm, Cargo, and wasm-pack
+Requires npm, Cargo, wasm-pack, and Fermyon Spin
 
 ```sh
 cd image-processor
 wasm-pack build
+cd ../api
+spin build --up
+# new tab
 cd ../app
 npm install
 ng serve
