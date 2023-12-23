@@ -97,13 +97,23 @@ async fn api_from_request<'req>(req: &'req Request) -> ApiBehaviour<'req> {
 }
 
 async fn get_image<'req>(identifier: &'req BandIdentifier<'req>) -> http::Response<Vec<u8>> {
-    let img_href = format!("{:}{:}_{:?}.jp2", IMG_BASE_HREF, identifier.image_id, identifier.band);
-    let response: Response = send(Request::get(img_href)).await.unwrap();
-    let mut builder = http::Response::builder().status(*response.status());
-    for header_entry in response.headers() {
-        if let Some(header_value_str) = header_entry.1.as_str() {
-            builder = builder.header(header_entry.0, header_value_str);
-        }
+    let img_href = format!("{:}{:}_{:?}_clip.tif", IMG_BASE_HREF, identifier.image_id, identifier.band);
+    let response_result: Result<Response, _> = send(Request::get(img_href)).await;
+    match response_result {
+        Ok(response) => {
+            let mut builder = http::Response::builder().status(*response.status());
+            for header_entry in response.headers() {
+                if let Some(header_value_str) = header_entry.1.as_str() {
+                    builder = builder.header(header_entry.0, header_value_str);
+                }
+            }
+            return builder.body(response.body().to_vec()).unwrap();
+        },
+        _ => {
+            http::Response::builder()
+                .status(500)
+                .body("Error fetching data".as_bytes().to_vec())
+                .unwrap()
+        },
     }
-    builder.body(response.body().to_vec()).unwrap()
 }
