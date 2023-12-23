@@ -12,6 +12,6 @@ export class AppComponent {
   constructor(
     private imageProcessor: ImageProcessorService
   ) {
-    this.imageProcessor.invoke();
+    this.imageProcessor.invoke("user-123", "Pa$$word");
   }
 }

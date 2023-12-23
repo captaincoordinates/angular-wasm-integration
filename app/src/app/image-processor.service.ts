@@ -9,8 +9,10 @@ export class ImageProcessorService {
 
   constructor() { }
 
-  public invoke(): void {
+  public invoke(username: string, password: string): void {
     const handle = WasmImageProcessor.Processor.new();
-    handle.greet();
+    handle.authenticate(username, password).then(() => {
+      handle.greet();
+    });
   }
 }
