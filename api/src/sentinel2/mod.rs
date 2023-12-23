@@ -1,3 +1,3 @@
-pub use band::{Band, BandIdentifier};
+pub use band::{ Band, BandIdentifier };
 
 mod band;

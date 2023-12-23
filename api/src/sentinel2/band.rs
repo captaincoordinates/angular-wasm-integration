@@ -17,7 +17,6 @@ pub enum Band {
     B12,
 }
 impl TryFrom<&str> for Band {
-
     type Error = ();
 
     fn try_from(s: &str) -> Result<Self, Self::Error> {
@@ -40,15 +39,15 @@ impl TryFrom<&str> for Band {
     }
 }
 
-
 pub struct BandIdentifier<'req> {
     pub image_id: &'req str,
     pub band: Band,
 }
 impl<'req> BandIdentifier<'req> {
     pub fn new(image_id: &'req str, band: Band) -> Self {
-        Self{
-            image_id, band
+        Self {
+            image_id,
+            band,
         }
     }
 }

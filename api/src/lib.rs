@@ -1,9 +1,9 @@
-use spin_sdk::http::{IntoResponse, Request, Method, send, Response};
+use spin_sdk::http::{ IntoResponse, Request, Method, send, Response };
 use spin_sdk::http_component;
 use regex::Regex;
-use http_util::{QueryString, Value};
-use sentinel2::{Band, BandIdentifier};
-use auth::{create_token, validate_token, AuthFailure};
+use http_util::{ QueryString, Value };
+use sentinel2::{ Band, BandIdentifier };
+use auth::{ create_token, validate_token, AuthFailure };
 
 mod auth;
 mod http_util;
@@ -22,49 +22,53 @@ enum ApiBehaviour<'req> {
 async fn handle_api(req: Request) -> anyhow::Result<impl IntoResponse> {
     println!("Handling request to {:?}", req.header("spin-full-url"));
     match api_from_request(&req).await {
-        ApiBehaviour::CreateToken => {
-            Ok(create_token())
-        },
+        ApiBehaviour::CreateToken => { Ok(create_token()) }
         not_create_token => {
             if let Some(header_value) = req.header("Authorization") {
                 match validate_token(header_value.as_str().unwrap()) {
                     Ok(()) => {
                         match not_create_token {
-                            ApiBehaviour::Get(identifier) => {
-                                Ok(get_image(&identifier).await)
-                            },
-                            _ => Ok(http::Response::builder()
-                                .status(404)
-                                .header("content-type", "text/plain")
-                                .body("Not Found".as_bytes().to_vec())?)
+                            ApiBehaviour::Get(identifier) => { Ok(get_image(&identifier).await) }
+                            _ =>
+                                Ok(
+                                    http::Response
+                                        ::builder()
+                                        .status(404)
+                                        .header("content-type", "text/plain")
+                                        .body("Not Found".as_bytes().to_vec())?
+                                ),
                         }
-                    },
+                    }
                     Err(auth_failure) => {
                         match auth_failure {
                             AuthFailure::InvalidToken => {
-                                Ok(http::Response::builder()
-                                    .status(403)
-                                    .body("Invalid Token".as_bytes().to_vec())?)
-                            },
+                                Ok(
+                                    http::Response
+                                        ::builder()
+                                        .status(403)
+                                        .body("Invalid Token".as_bytes().to_vec())?
+                                )
+                            }
                             AuthFailure::ExpiredToken => {
-                                Ok(http::Response::builder()
-                                    .status(401)
-                                    .body("Expired Token".as_bytes().to_vec())?)
-                            },
+                                Ok(
+                                    http::Response
+                                        ::builder()
+                                        .status(401)
+                                        .body("Expired Token".as_bytes().to_vec())?
+                                )
+                            }
                         }
                     }
                 }
             } else {
-                Ok(http::Response::builder()
-                    .status(401)
-                    .body("Missing Token".as_bytes().to_vec())?)
+                Ok(http::Response::builder().status(401).body("Missing Token".as_bytes().to_vec())?)
             }
         }
     }
 }
 
 async fn api_from_request<'req>(req: &'req Request) -> ApiBehaviour<'req> {
-    let rel_path = &req.path()[API_BASE.len() + 1..];   // safe as long as API_BASE is always ASCII characters
+    let rel_path = &req.path()[API_BASE.len() + 1..]; // safe as long as API_BASE is always ASCII characters
     match &req.method() {
         Method::Get => {
             let query_string = QueryString::from(req.query());
@@ -75,28 +79,26 @@ async fn api_from_request<'req>(req: &'req Request) -> ApiBehaviour<'req> {
                         Value::Single(val) => {
                             let band = Band::try_from(val).unwrap_or(Band::B01);
                             return ApiBehaviour::Get(BandIdentifier::new(rel_path, band));
-                        },
-                        _ => {},
+                        }
+                        _ => {}
                     }
                 }
             }
             ApiBehaviour::NotFound
-        },
+        }
         Method::Post => {
             if rel_path == "token" {
                 return ApiBehaviour::CreateToken;
             }
             ApiBehaviour::NotFound
-        },
-        _ => {
-            ApiBehaviour::NotFound
         }
+        _ => { ApiBehaviour::NotFound }
     }
 }
 
 async fn get_image<'req>(identifier: &'req BandIdentifier<'req>) -> http::Response<Vec<u8>> {
     let img_href = format!("{:}{:}_{:?}.jp2", IMG_BASE_HREF, identifier.image_id, identifier.band);
-    let response: Response = send(Request::get(img_href)).await.unwrap();            
+    let response: Response = send(Request::get(img_href)).await.unwrap();
     let mut builder = http::Response::builder().status(*response.status());
     for header_entry in response.headers() {
         if let Some(header_value_str) = header_entry.1.as_str() {
