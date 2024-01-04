@@ -1,4 +1,5 @@
 mod browser;
+mod image;
 mod processor;
 mod utils;
 

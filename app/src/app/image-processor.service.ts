@@ -1,5 +1,6 @@
-import { Injectable } from '@angular/core';
+import { ElementRef, Injectable } from '@angular/core';
 import * as WasmImageProcessor from 'image-processor';
+import { memory as wasmImageProcessorMemory } from 'image-processor/image_processor_bg.wasm'
 
 
 @Injectable({
@@ -7,14 +8,61 @@ import * as WasmImageProcessor from 'image-processor';
 })
 export class ImageProcessorService {
 
-  constructor() { }
+  private handle: WasmImageProcessor.Processor;
 
-  public invoke(username: string, password: string): void {
-    const handle = WasmImageProcessor.Processor.new();
-    handle.authenticate(username, password).then(() => {
-      handle.fetch_image(4).then(() => {
-        
-      });
-    });
+  constructor() {
+    this.handle = WasmImageProcessor.Processor.new();
+  }
+
+  public init(username: string, password: string): Promise<unknown> {
+    return this.handle.authenticate(username, password)
+      .catch(err => {
+        alert(`problem authenticating: ${err}`)
+      })
+    ;
+  }
+
+  public fetchImage(band: number): Promise<WasmImageProcessor.Image> {
+    return this.handle.fetch_image(band, true);
+  }
+
+  public displayImage(canvasElement: ElementRef, imageData: WasmImageProcessor.Image): void {
+    const pixelValues = new Uint8Array(wasmImageProcessorMemory.buffer, imageData.pixels_ptr(), imageData.width * imageData.height);
+    canvasElement.nativeElement.width = imageData.width;
+    canvasElement.nativeElement.height = imageData.height;
+    const ctx = canvasElement.nativeElement.getContext("2d");
+    ctx.beginPath();
+    let renderedColours: {[index: number]: number} = {};
+    let firstColours: number[] = [];
+    let lastColours: number[] = [];
+    for (let row = 0; row < imageData.height; row++) {
+      for (let col = 0; col < imageData.width; col++) {
+        const idx = row * imageData.width + col;
+        const value = pixelValues[idx];
+        if (row == 0 && col < 10) {
+          firstColours.push((value === undefined ? -1 : value));
+        }
+        if (row == (imageData.height - 1) && col >= (imageData.width - 10)) {
+          lastColours.push((value === undefined ? -1 : value));
+        }
+        if (renderedColours.hasOwnProperty(value)) {
+          renderedColours[value]++;
+        } else {
+          renderedColours[value] = 1;
+        }
+        ctx.fillStyle = this.rgbToHexColor(value, value, value);
+        ctx.fillRect(row, col, 1, 1);
+      }
+    }
+    console.log(`js first: ${firstColours}`);
+    console.log(`js last: ${lastColours}`);
+    ctx.stroke();
+  }
+
+  private rgbToHexColor(red: number, green: number, blue: number): string {
+    const clamp = (value: number) => Math.max(0, Math.min(255, value));
+    const hexString = ((clamp(red) << 16) | (clamp(green) << 8) | clamp(blue)).toString(16);
+    const paddedHexString = hexString.padStart(6, '0');
+    return `#${paddedHexString}`;
   }
 }
