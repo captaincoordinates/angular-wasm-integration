@@ -16,4 +16,8 @@ impl Image {
     pub fn pixels_ptr(&self) -> *const u8 {
         self.pixels.as_ptr()
     }
+
+    pub fn pixels_count(&self) -> usize {
+        self.pixels.len()
+    }
 }

@@ -57,7 +57,9 @@ export class ImageDisplayComponent implements AfterViewInit {
             break;
           case SelectedImageType.read:
             const band = parseInt(this.selectedImageOption.value, 10);
+            const start = performance.now();
             this.imageProcessor.fetchImage(band, this.stretchSelected === true).then(data => {
+              console.log(`fetched image in ${performance.now() - start}ms`);
               console.log(`loaded image with dimensions ${data.width},${data.height} with pointer starting at ${data.pixels_ptr()}`)
               this.imageProcessor.displayImage(this.canvasEl, data);
             });

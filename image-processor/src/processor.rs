@@ -55,14 +55,14 @@ impl Processor {
             if response.status().is_success() {
                 let bytes = response.bytes().await.unwrap();
                 let img = ImageReader::new(Cursor::new(bytes)).with_guessed_format().unwrap().decode().unwrap();
-                let mut pixels: Vec<u8> = vec![];
+                let mut grey_scale_pixels: Vec<u8> = vec![];
                 for i in 0..img.width() {
                     for j in 0..img.height() {
-                        pixels.push(img.get_pixel(i, j)[0]);
+                        grey_scale_pixels.push(img.get_pixel(i, j)[0]);
                     }
                 }
                 if histogram_stretch {
-                    let non_zero_values: Vec<u8> = pixels.iter().cloned().filter(|&x| x != 0).collect();
+                    let non_zero_values: Vec<u8> = grey_scale_pixels.iter().cloned().filter(|&x| x != 0).collect();
                     let min_value_option = non_zero_values.iter().min();
                     let max_value_option = non_zero_values.iter().max();
                     if let Some(min_value) = min_value_option {
@@ -70,18 +70,18 @@ impl Processor {
                             let value_range = max_value - min_value;
                             if value_range > 0 {
                                 console_log(&format!("stretching with min: {:}, max: {:}", min_value, max_value));
-                                for pixel in pixels.iter_mut() {
+                                for pixel in grey_scale_pixels.iter_mut() {
                                     let calculated = ((*pixel as f32) - (*min_value as f32)) / (value_range as f32) * (255 as f32);
                                     *pixel = calculated.round() as u8;
                                 }
                                 let mut idx = 0;
                                 let mut first: Vec<u8> = vec![];
                                 let mut last: Vec<u8> = vec![];
-                                for pixel in pixels.iter() {
+                                for pixel in grey_scale_pixels.iter() {
                                     if idx < 10 {
                                         first.push(*pixel);
                                     }
-                                    if idx >= (pixels.len() - 10) {
+                                    if idx >= (grey_scale_pixels.len() - 10) {
                                         last.push(*pixel);
                                     }
                                     idx += 1;
@@ -98,7 +98,14 @@ impl Processor {
                         console_log("unable to determine min non-zero pixel value");
                     }
                 }
-                ImageData::new(img.width().try_into().unwrap(), img.height().try_into().unwrap(), pixels)
+                let mut rgba_pixels: Vec<u8> = vec![];
+                for i in 0..grey_scale_pixels.len() {
+                    for _ in 0..3 {
+                        rgba_pixels.push(grey_scale_pixels[i])
+                    }
+                    rgba_pixels.push(255);
+                }
+                ImageData::new(img.width().try_into().unwrap(), img.height().try_into().unwrap(), rgba_pixels)
             } else {
                 wasm_bindgen::throw_str(&format!("error fetching image band {:}", band));
             }
