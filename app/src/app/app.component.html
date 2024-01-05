@@ -1,7 +1,22 @@
-<h1>Demo</h1>
+<ul>
+  <li>Band Selection</li>
+  <li>Optional histogram stretch</li>
+  <li>debug log</li>
+  <li>resampling / resize with debounce</li>
+  <li>Rust cache of images, with clear option</li>
+  <li>NDVI calc</li>
+  <li>loading indicator</li>
+  <li>explanatory text</li>
+  <li>break into multiple components</li>
+  <li>remove debug info</li>
+</ul>
 
-<canvas
-  #imageCanvas
-  width="{{ default_image_width }}"
-  height="{{ default_image_height }}">
-</canvas>
+<app-image-selection
+  (optionChange)="handleImageSelectionChange($event)"
+  >
+</app-image-selection>
+
+<app-image-display
+  [selectedImageOption]="selectedImage"
+  >
+</app-image-display>

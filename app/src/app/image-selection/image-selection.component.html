@@ -1,0 +1,11 @@
+<select
+    [(ngModel)]="selectedOption"
+    (change)="optionChanged($event)"
+    >
+    <option
+        *ngFor="let option of options"
+        [ngValue]="option"
+        >
+        {{option.title}}
+    </option>
+</select>

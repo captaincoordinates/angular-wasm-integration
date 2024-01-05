@@ -1,36 +1,16 @@
-import { Component, ViewChild, ElementRef, AfterViewInit } from '@angular/core';
-import { ImageProcessorService } from './image-processor.service';
+import { Component } from '@angular/core';
+import { OptionValue as SelectedImage } from './image-selection/image-selection.component';
 
 @Component({
   selector: 'app-root',
   templateUrl: './app.component.html',
   styleUrls: ['./app.component.sass']
 })
-export class AppComponent implements AfterViewInit {
+export class AppComponent {
 
-  @ViewChild("imageCanvas")
-  public canvasEl!: ElementRef;
+  public selectedImage?: SelectedImage;
 
-  title = 'app';
-
-  constructor(
-    private imageProcessor: ImageProcessorService,
-  ) {}
-
-  public ngAfterViewInit(): void {
-    this.imageProcessor.init("user-123", "Pa$$word").then(() => {
-      this.imageProcessor.fetchImage(4).then(data => {
-        console.log(`loaded image with dimensions ${data.width},${data.height} with pointer starting at ${data.pixels_ptr()}`)
-        this.imageProcessor.displayImage(this.canvasEl, data);
-      });
-    });
-  }
-
-  public get default_image_width(): number {
-    return 0;
-  }
-
-  public get default_image_height(): number {
-    return 0;
+  public handleImageSelectionChange(selection: SelectedImage): void {
+    this.selectedImage = selection;
   }
 }
