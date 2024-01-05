@@ -1,8 +1,7 @@
 import { AfterViewInit, Component, ElementRef, Input, SimpleChanges, ViewChild } from '@angular/core';
 import { ImageProcessorService } from '../image-processor.service';
-import { OptionValue as SelectedImage, OptionType as SelectedImageType } from '../image-selection/image-selection.component';
+import { OptionValue as ImageType, OptionType as SelectedImageType } from '../image-selection/image-selection.component';
 import { ReplaySubject } from 'rxjs';
-import * as WasmImageProcessor from 'image-processor';
 
 @Component({
   selector: 'app-image-display',
@@ -15,7 +14,10 @@ export class ImageDisplayComponent implements AfterViewInit {
   public canvasEl!: ElementRef;
 
   @Input()
-  public selectedImageOption?: SelectedImage;
+  public selectedImageOption?: ImageType;
+
+  @Input()
+  public stretchSelected?: boolean; 
 
   private initialising: ReplaySubject<void> = new ReplaySubject<void>(1);
 
@@ -30,8 +32,11 @@ export class ImageDisplayComponent implements AfterViewInit {
   }
 
   public ngOnChanges(changes: SimpleChanges): void {
-    if (changes["selectedImageOption"]) {
-      this.handleSelectedImageChanged();
+    if (changes["selectedImageOption"] && !changes["selectedImageOption"].firstChange) {
+      this.render();
+    }
+    if (changes["stretchSelected"] && !changes["stretchSelected"].firstChange) {
+      this.render();
     }
   }
 
@@ -43,7 +48,7 @@ export class ImageDisplayComponent implements AfterViewInit {
     return 0;
   }
 
-  private handleSelectedImageChanged(): void {
+  private render(): void {
     this.initialising.subscribe(() => {
       if (this.selectedImageOption) {
         switch (this.selectedImageOption.type) {
@@ -52,7 +57,7 @@ export class ImageDisplayComponent implements AfterViewInit {
             break;
           case SelectedImageType.read:
             const band = parseInt(this.selectedImageOption.value, 10);
-            this.imageProcessor.fetchImage(band).then(data => {
+            this.imageProcessor.fetchImage(band, this.stretchSelected === true).then(data => {
               console.log(`loaded image with dimensions ${data.width},${data.height} with pointer starting at ${data.pixels_ptr()}`)
               this.imageProcessor.displayImage(this.canvasEl, data);
             });
@@ -64,7 +69,6 @@ export class ImageDisplayComponent implements AfterViewInit {
       } else {
         this.clearCanvas();
       }
-      console.log(`display handling change ${this.selectedImageOption?.value}`);
     });
   }
 

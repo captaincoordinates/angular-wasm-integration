@@ -1,6 +1,5 @@
 <ul>
-  <li>Band Selection</li>
-  <li>Optional histogram stretch</li>
+  <li>See if there's a way to read as an image, rather than populate canvas (e.g. data url read directly from WASM memory?)</li>
   <li>debug log</li>
   <li>resampling / resize with debounce</li>
   <li>Rust cache of images, with clear option</li>
@@ -16,7 +15,12 @@
   >
 </app-image-selection>
 
+<app-image-stretch-selection
+  (stretchChange)="handleStretchChange($event)"
+  ></app-image-stretch-selection>
+
 <app-image-display
   [selectedImageOption]="selectedImage"
+  [stretchSelected]="stretchSelected"
   >
 </app-image-display>

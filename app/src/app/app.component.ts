@@ -1,5 +1,7 @@
 import { Component } from '@angular/core';
-import { OptionValue as SelectedImage } from './image-selection/image-selection.component';
+import { OptionValue as ImageType } from './image-selection/image-selection.component';
+import { ImageStretchSelectionComponent } from './image-stretch-selection/image-stretch-selection.component';
+
 
 @Component({
   selector: 'app-root',
@@ -8,9 +10,14 @@ import { OptionValue as SelectedImage } from './image-selection/image-selection.
 })
 export class AppComponent {
 
-  public selectedImage?: SelectedImage;
+  public selectedImage?: ImageType;
+  public stretchSelected: boolean = ImageStretchSelectionComponent.STRETCH_DEFAULT;
 
-  public handleImageSelectionChange(selection: SelectedImage): void {
+  public handleImageSelectionChange(selection: ImageType): void {
     this.selectedImage = selection;
+  }
+
+  public handleStretchChange(selected: boolean): void {
+    this.stretchSelected = selected;
   }
 }

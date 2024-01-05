@@ -49,7 +49,7 @@ export class ImageSelectionComponent {
 
   public selectedOption: DisplayValue = this.options.filter(x => x.type === OptionType.none)[0];
 
-  public optionChanged(event: Event): void {
+  public selectedOptionChanged(event: Event): void {
     this.optionChange.emit(this.selectedOption);
   }
 }

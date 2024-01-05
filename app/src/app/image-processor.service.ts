@@ -22,11 +22,12 @@ export class ImageProcessorService {
     ;
   }
 
-  public fetchImage(band: number): Promise<WasmImageProcessor.Image> {
-    return this.handle.fetch_image(band, true);
+  public fetchImage(band: number, histogramStretch: boolean): Promise<WasmImageProcessor.Image> {
+    return this.handle.fetch_image(band, histogramStretch);
   }
 
   public displayImage(canvasElement: ElementRef, imageData: WasmImageProcessor.Image): void {
+    const start = performance.now();
     const pixelValues = new Uint8Array(wasmImageProcessorMemory.buffer, imageData.pixels_ptr(), imageData.width * imageData.height);
     canvasElement.nativeElement.width = imageData.width;
     canvasElement.nativeElement.height = imageData.height;
@@ -57,6 +58,7 @@ export class ImageProcessorService {
     console.log(`js first: ${firstColours}`);
     console.log(`js last: ${lastColours}`);
     ctx.stroke();
+    console.log(`elapsed: ${performance.now() - start}ms`);
   }
 
   private rgbToHexColor(red: number, green: number, blue: number): string {

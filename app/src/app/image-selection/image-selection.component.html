@@ -1,6 +1,6 @@
 <select
     [(ngModel)]="selectedOption"
-    (change)="optionChanged($event)"
+    (change)="selectedOptionChanged($event)"
     >
     <option
         *ngFor="let option of options"
