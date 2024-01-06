@@ -1,6 +1,7 @@
 use wasm_bindgen::prelude::*;
 
 #[wasm_bindgen]
+#[derive(Clone)]
 pub struct Image {
     pub width: u16,
     pub height: u16,
