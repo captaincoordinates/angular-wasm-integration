@@ -78,7 +78,9 @@ export class ImageDisplayComponent implements AfterViewInit {
             });
             break;
           case SelectedImageType.derived:
-            console.log(`attempting to derive new data`);
+            this.imageProcessor.calculateNdvi(this.stretchSelected === true, this.canvas_width, this.canvas_height).then(data => {
+              this.imageProcessor.displayImage(this.canvasEl, data);
+            });
             break;
         }
       } else {
@@ -88,11 +90,11 @@ export class ImageDisplayComponent implements AfterViewInit {
   }
 
   private get canvas_width(): number {
-    return this.canvasEl.nativeElement.width;
+    return this.canvasEl.nativeElement.clientWidth;
   }
 
   private get canvas_height(): number {
-    return this.canvasEl.nativeElement.height;
+    return this.canvasEl.nativeElement.clientHeight;
   }
 
   private clearCanvas(): void {
