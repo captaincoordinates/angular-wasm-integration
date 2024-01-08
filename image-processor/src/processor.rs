@@ -71,27 +71,7 @@ impl Processor {
                         }
                     }
                     if histogram_stretch {
-                        let non_zero_values: Vec<u8> = grey_scale_pixels.iter().cloned().filter(|&x| x != 0).collect();
-                        let min_value_option = non_zero_values.iter().min();
-                        let max_value_option = non_zero_values.iter().max();
-                        if let Some(min_value) = min_value_option {
-                            if let Some(max_value) = max_value_option {
-                                let value_range = max_value - min_value;
-                                if value_range > 0 {
-                                    console_log(&format!("stretching with min: {:}, max: {:}", min_value, max_value));
-                                    for pixel in grey_scale_pixels.iter_mut() {
-                                        let calculated = ((*pixel as f32) - (*min_value as f32)) / (value_range as f32) * (255 as f32);
-                                        *pixel = calculated.round() as u8;
-                                    }
-                                } else {
-                                    console_log("value range is zero");
-                                }
-                            } else {
-                                console_log("unable to determine max non-zero pixel value");
-                            }
-                        } else {
-                            console_log("unable to determine min non-zero pixel value");
-                        }
+                        Processor::apply_histogram_stretch(&mut grey_scale_pixels);
                     }
                     let mut rgba_pixels: Vec<u8> = vec![];
                     for i in 0..grey_scale_pixels.len() {
@@ -108,6 +88,30 @@ impl Processor {
             } else {
                 wasm_bindgen::throw_str(&format!("error fetching image band {:}", band));
             }
+        }
+    }
+
+    fn apply_histogram_stretch(pixels: &mut Vec<u8>) {
+        let non_zero_values: Vec<u8> = pixels.iter().cloned().filter(|&x| x != 0).collect();
+        let min_value_option = non_zero_values.iter().min();
+        let max_value_option = non_zero_values.iter().max();
+        if let Some(min_value) = min_value_option {
+            if let Some(max_value) = max_value_option {
+                let value_range = max_value - min_value;
+                if value_range > 0 {
+                    console_log(&format!("stretching with min: {:}, max: {:}", min_value, max_value));
+                    for pixel in pixels.iter_mut() {
+                        let calculated = ((*pixel as f32) - (*min_value as f32)) / (value_range as f32) * (255 as f32);
+                        *pixel = calculated.round() as u8;
+                    }
+                } else {
+                    console_log("value range is zero");
+                }
+            } else {
+                console_log("unable to determine max non-zero pixel value");
+            }
+        } else {
+            console_log("unable to determine min non-zero pixel value");
         }
     }
 
