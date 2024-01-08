@@ -1,7 +1,8 @@
 use crate::browser::console_log;
 use crate::image::Image as ImageData;
 use crate::utils::set_panic_hook;
-use image::GenericImageView;
+use image::{GenericImageView, DynamicImage};
+use image::imageops::{resize, FilterType};
 use reqwest;
 use wasm_bindgen::prelude::*;
 use serde_json::json;
@@ -14,7 +15,8 @@ use std::convert::TryInto;
 pub struct Processor {
     jwt: Option<String>,
     http_client: reqwest::Client,
-    cache: HashMap<String, ImageData>,
+    fetch_cache: HashMap<String, DynamicImage>,
+    processed_cache: HashMap<String, ImageData>,
 }
 
 #[wasm_bindgen]
@@ -25,7 +27,8 @@ impl Processor {
         Self {
             jwt: Option::None,
             http_client: reqwest::Client::new(),
-            cache: HashMap::new(),
+            fetch_cache: HashMap::new(),
+            processed_cache: HashMap::new(),
         }
     }
 
@@ -49,45 +52,58 @@ impl Processor {
         }
     }
 
-    pub async fn fetch_image(&mut self, band: u8, histogram_stretch: bool) -> ImageData {
-        let cache_key = Processor::get_cache_key(&band, &histogram_stretch);
-        if self.cache.contains_key(&cache_key) {
-            console_log(&format!("cache hit, returning cached image"));
-            return self.cache.get(&cache_key).unwrap().clone();
+    pub async fn fetch_image(&mut self, band: u8, histogram_stretch: bool, width_option: Option<u32>, height_option: Option<u32>) -> ImageData {
+        let width = width_option.unwrap_or(0);
+        let height = height_option.unwrap_or(0);
+        let cache_key = Processor::get_processed_cache_key(&band, &histogram_stretch, &width, &height);
+        if self.processed_cache.contains_key(&cache_key) {
+            console_log("processed cache hit, returning cached image");
+            return self.processed_cache.get(&cache_key).unwrap().clone();
         } else {
-            console_log(&format!("cache miss, fetching and processing image"));
-            if let Ok(response) = self.http_client
-                .get(&format!("http://localhost:3000/api/T09UXA_20231210T194821?band={:}", band))
-                .header("Authorization", &format!("Bearer {:}", self.jwt.clone().unwrap()))
-                .send()
-                .await {
-                if response.status().is_success() {
-                    let bytes = response.bytes().await.unwrap();
-                    let img = ImageReader::new(Cursor::new(bytes)).with_guessed_format().unwrap().decode().unwrap();
-                    let mut grey_scale_pixels: Vec<u8> = vec![];
-                    for i in 0..img.width() {
-                        for j in 0..img.height() {
-                            grey_scale_pixels.push(img.get_pixel(i, j)[0]);
-                        }
+            console_log("processed cache miss, processing image");
+            let fetch_cache_key = Processor::get_fetch_cache_key(&band);
+            if !self.fetch_cache.contains_key(&fetch_cache_key) {
+                console_log("fetch cache miss, fetching image");
+                if let Ok(response) = self.http_client
+                    .get(&format!("http://localhost:3000/api/T09UXA_20231210T194821?band={:}", band))
+                    .header("Authorization", &format!("Bearer {:}", self.jwt.clone().unwrap()))
+                    .send()
+                    .await {
+                    if response.status().is_success() {
+                        let bytes = response.bytes().await.unwrap();
+                        let img = ImageReader::new(Cursor::new(bytes)).with_guessed_format().unwrap().decode().unwrap();
+                        self.fetch_cache.insert(fetch_cache_key.clone(), img);
+                    } else {
+                        wasm_bindgen::throw_str(&format!("error fetching image band {:}", band));
                     }
-                    if histogram_stretch {
-                        Processor::apply_histogram_stretch(&mut grey_scale_pixels);
-                    }
-                    let mut rgba_pixels: Vec<u8> = vec![];
-                    for i in 0..grey_scale_pixels.len() {
-                        for _ in 0..3 {
-                            rgba_pixels.push(grey_scale_pixels[i])
-                        }
-                        rgba_pixels.push(255);
-                    }
-                    self.cache.insert(cache_key.clone(), ImageData::new(img.width().try_into().unwrap(), img.height().try_into().unwrap(), rgba_pixels));
-                    return self.cache.get(&cache_key).unwrap().clone();
                 } else {
                     wasm_bindgen::throw_str(&format!("error fetching image band {:}", band));
                 }
             } else {
-                wasm_bindgen::throw_str(&format!("error fetching image band {:}", band));
+                console_log("fetch cache hit, using cached image");
             }
+            let mut img = self.fetch_cache.get(&fetch_cache_key).unwrap().clone();
+            if width > 0 && height > 0 {
+                img = DynamicImage::ImageRgba8(resize(&img, width, height, FilterType::Nearest));
+            }
+            let mut grey_scale_pixels: Vec<u8> = vec![];
+            for i in 0..img.width() {
+                for j in 0..img.height() {
+                    grey_scale_pixels.push(img.get_pixel(i, j)[0]);
+                }
+            }
+            if histogram_stretch {
+                Processor::apply_histogram_stretch(&mut grey_scale_pixels);
+            }
+            let mut rgba_pixels: Vec<u8> = vec![];
+            for i in 0..grey_scale_pixels.len() {
+                for _ in 0..3 {
+                    rgba_pixels.push(grey_scale_pixels[i])
+                }
+                rgba_pixels.push(255);
+            }
+            self.processed_cache.insert(cache_key.clone(), ImageData::new(img.width().try_into().unwrap(), img.height().try_into().unwrap(), rgba_pixels));
+            return self.processed_cache.get(&cache_key).unwrap().clone();
         }
     }
 
@@ -115,11 +131,16 @@ impl Processor {
         }
     }
 
-    pub fn clear_cache(&mut self) {
-        self.cache.clear();
+    pub fn clear_processed_cache(&mut self) {
+        console_log(&format!("WASM clearing processed cache"));
+        self.processed_cache.clear();
     }
 
-    fn get_cache_key(band: &u8, histogram_stretch: &bool) -> String {
-        format!("b{:}_stretch{:}", band, histogram_stretch).to_owned()
+    fn get_fetch_cache_key(band: &u8) -> String {
+        format!("b{:}", band)
+    }
+
+    fn get_processed_cache_key(band: &u8, histogram_stretch: &bool, width: &u32, height: &u32) -> String {
+        format!("b{:}_stretch{:}_w{:}_h{:}", band, histogram_stretch, width, height).to_owned()
     }
 }

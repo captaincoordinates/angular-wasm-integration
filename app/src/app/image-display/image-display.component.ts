@@ -1,4 +1,4 @@
-import { AfterViewInit, Component, ElementRef, Input, SimpleChanges, ViewChild } from '@angular/core';
+import { AfterViewInit, Component, ElementRef, HostListener, Input, SimpleChanges, ViewChild } from '@angular/core';
 import { ImageProcessorService } from '../image-processor.service';
 import { OptionValue as ImageType, OptionType as SelectedImageType } from '../image-selection/image-selection.component';
 import { ReplaySubject } from 'rxjs';
@@ -20,6 +20,7 @@ export class ImageDisplayComponent implements AfterViewInit {
   public stretchSelected?: boolean; 
 
   private initialising: ReplaySubject<void> = new ReplaySubject<void>(1);
+  private debounceHandle?: number = undefined;
 
   constructor(
     private imageProcessor: ImageProcessorService,
@@ -40,6 +41,18 @@ export class ImageDisplayComponent implements AfterViewInit {
     }
   }
 
+  @HostListener("window:resize", ["$event"])
+  public onResize(_: Event) {
+    if (this.debounceHandle !== undefined) {
+      window.clearTimeout(this.debounceHandle);
+    }
+    this.debounceHandle = window.setTimeout(() => {
+      this.debounceHandle = undefined;
+      this.imageProcessor.clearCache();
+      this.render();
+    }, 200);
+  }
+
   public get default_image_width(): number {
     return 0;
   }
@@ -58,7 +71,7 @@ export class ImageDisplayComponent implements AfterViewInit {
           case SelectedImageType.read:
             const band = parseInt(this.selectedImageOption.value, 10);
             const start = performance.now();
-            this.imageProcessor.fetchImage(band, this.stretchSelected === true).then(data => {
+            this.imageProcessor.fetchImage(band, this.stretchSelected === true, this.canvas_width, this.canvas_height).then(data => {
               console.log(`fetched image in ${performance.now() - start}ms`);
               console.log(`loaded image with dimensions ${data.width},${data.height} with pointer starting at ${data.pixels_ptr()}`)
               this.imageProcessor.displayImage(this.canvasEl, data);
@@ -72,6 +85,14 @@ export class ImageDisplayComponent implements AfterViewInit {
         this.clearCanvas();
       }
     });
+  }
+
+  private get canvas_width(): number {
+    return this.canvasEl.nativeElement.width;
+  }
+
+  private get canvas_height(): number {
+    return this.canvasEl.nativeElement.height;
   }
 
   private clearCanvas(): void {

@@ -22,8 +22,8 @@ export class ImageProcessorService {
     ;
   }
 
-  public fetchImage(band: number, histogramStretch: boolean): Promise<WasmImageProcessor.Image> {
-    return this.handle.fetch_image(band, histogramStretch);
+  public fetchImage(band: number, histogramStretch: boolean, width: number, height: number): Promise<WasmImageProcessor.Image> {
+    return this.handle.fetch_image(band, histogramStretch, width, height);
   }
 
   public displayImage(canvasElement: ElementRef, imageData: WasmImageProcessor.Image): void {
@@ -34,5 +34,10 @@ export class ImageProcessorService {
     const ctx = canvasElement.nativeElement.getContext("2d");
     ctx.putImageData(new ImageData(pixelValues, imageData.width, imageData.height), 0, 0);
     console.log(`elapsed: ${performance.now() - start}ms`);
+  }
+
+  public clearCache(): void {
+    console.log(`JS calling clear processed cache`);
+    this.handle.clear_processed_cache();
   }
 }
