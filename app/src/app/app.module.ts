@@ -6,13 +6,15 @@ import { ImageSelectionComponent } from './image-selection/image-selection.compo
 import { ImageDisplayComponent } from './image-display/image-display.component';
 import { FormsModule } from '@angular/forms';
 import { ImageStretchSelectionComponent } from './image-stretch-selection/image-stretch-selection.component';
+import { DebugLogComponent } from './debug-log/debug-log.component';
 
 @NgModule({
   declarations: [
     AppComponent,
     ImageSelectionComponent,
     ImageDisplayComponent,
-    ImageStretchSelectionComponent
+    ImageStretchSelectionComponent,
+    DebugLogComponent
   ],
   imports: [
     BrowserModule,

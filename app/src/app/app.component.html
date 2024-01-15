@@ -1,21 +1,29 @@
 <ul>
-  <li>debug log</li>
   <li>loading indicator</li>
   <li>explanatory text</li>
-  <li>remove debug info</li>
+  <li>styling</li>
 </ul>
 
-<app-image-selection
-  (optionChange)="handleImageSelectionChange($event)"
-  >
-</app-image-selection>
+<div id="selection-container">
+  <app-image-selection
+    (optionChange)="handleImageSelectionChange($event)"
+    >
+  </app-image-selection>
+  <app-image-stretch-selection
+    (stretchChange)="handleStretchChange($event)"
+    >
+  </app-image-stretch-selection>
+</div>
 
-<app-image-stretch-selection
-  (stretchChange)="handleStretchChange($event)"
-  ></app-image-stretch-selection>
-
-<app-image-display
-  [selectedImageOption]="selectedImage"
-  [stretchSelected]="stretchSelected"
-  >
-</app-image-display>
+<div id="display-container">
+  <div id="display-image-container">
+    <app-image-display
+      [selectedImageOption]="selectedImage"
+      [stretchSelected]="stretchSelected"
+      >
+    </app-image-display>
+  </div>
+  <div id="display-log-container">
+    <app-debug-log></app-debug-log>
+  </div>
+</div>

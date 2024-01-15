@@ -1,0 +1,10 @@
+<div
+  #logWrapper
+  id="log-wrapper"
+  >
+  <div
+    class="log-entry {{entry.className}}"
+    *ngFor="let entry of entries">
+    {{ entry.message }}
+  </div>
+</div>

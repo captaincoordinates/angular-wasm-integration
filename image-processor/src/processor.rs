@@ -33,6 +33,7 @@ impl Processor {
     }
 
     pub async fn authenticate(&mut self, username: &str, password: &str) {
+        console_log("requesting token from API with user/pass");
         if let Ok(response) = self.http_client
             .post("http://localhost:3000/api/token")
             .body(json!({
@@ -43,7 +44,9 @@ impl Processor {
             .await {
             if let Some(access_token) = response.headers().get("Access_token") {
                 let access_token_str = access_token.to_str().unwrap();
+                let token_to_log: String = access_token_str.chars().take(12).collect();
                 self.jwt = Some(String::from(access_token_str));
+                console_log(&format!("storing token {:}...", token_to_log));
             } else {
                 wasm_bindgen::throw_str("access_token not provided by backend");
             }
@@ -181,7 +184,7 @@ impl Processor {
     }
 
     pub fn clear_processed_cache(&mut self) {
-        console_log(&format!("WASM clearing processed cache"));
+        console_log(&format!("clearing processed cache"));
         self.processed_cache.clear();
     }
 

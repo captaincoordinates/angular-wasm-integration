@@ -13,6 +13,14 @@ export class AppComponent {
   public selectedImage?: ImageType;
   public stretchSelected: boolean = ImageStretchSelectionComponent.STRETCH_DEFAULT;
 
+  constructor() {
+    (<any>window).appLogger = {
+      wasm_log: (message: string) => {
+        console.log(`log service not yet initialised: ${message}`);
+      }
+    };
+  }
+
   public handleImageSelectionChange(selection: ImageType): void {
     this.selectedImage = selection;
   }

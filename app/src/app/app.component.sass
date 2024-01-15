@@ -1,0 +1,25 @@
+$displayBreakpoint: 850px
+
+#display-container
+    display: flex
+    flex-direction: row
+    margin-top: 0.5em
+
+    @media (max-width: $displayBreakpoint)
+        flex-direction: column
+
+#display-image-container
+    flex: 0.7
+    margin-right: 0.25em
+
+    @media (max-width: $displayBreakpoint)
+        flex: 1
+        margin-right: 0
+
+#display-log-container
+    flex: 0.3
+    margin-left: 0.25em
+    
+    @media (max-width: $displayBreakpoint)
+        flex: 1
+        margin-left: 0
