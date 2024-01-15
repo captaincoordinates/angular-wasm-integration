@@ -42,7 +42,7 @@ export class ImageProcessorService {
     canvasElement.nativeElement.height = imageData.height;
     const ctx = canvasElement.nativeElement.getContext("2d");
     ctx.putImageData(new ImageData(pixelValues, imageData.width, imageData.height), 0, 0);
-    this.logService.log(`displayed in ${Math.round(performance.now() - start)}ms`);
+    this.logService.log(`display updated in ${Math.round(performance.now() - start)}ms`);
   }
 
   public clearCache(): void {

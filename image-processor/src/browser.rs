@@ -6,5 +6,5 @@ extern "C" {
     pub fn alert(s: &str);
     
     #[wasm_bindgen(js_namespace = appLogger, js_name = wasmLog)]
-    pub fn console_log(s: &str); 
+    pub fn browser_log(s: &str); 
 }

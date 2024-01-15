@@ -1,4 +1,4 @@
-use crate::browser::console_log;
+use crate::browser::browser_log;
 use crate::image::Image as ImageData;
 use crate::utils::set_panic_hook;
 use image::{GenericImageView, DynamicImage, ImageBuffer};
@@ -33,7 +33,7 @@ impl Processor {
     }
 
     pub async fn authenticate(&mut self, username: &str, password: &str) {
-        console_log("requesting token from API with user/pass");
+        browser_log("requesting token from API with user/pass");
         if let Ok(response) = self.http_client
             .post("http://localhost:3000/api/token")
             .body(json!({
@@ -46,7 +46,7 @@ impl Processor {
                 let access_token_str = access_token.to_str().unwrap();
                 let token_to_log: String = access_token_str.chars().take(12).collect();
                 self.jwt = Some(String::from(access_token_str));
-                console_log(&format!("storing token {:}...", token_to_log));
+                browser_log(&format!("storing token {:}...", token_to_log));
             } else {
                 wasm_bindgen::throw_str("access_token not provided by backend");
             }
@@ -60,10 +60,10 @@ impl Processor {
         let height = height_option.unwrap_or(0);
         let cache_key = Processor::get_processed_cache_key(&Some(band), &histogram_stretch, &width, &height);
         if self.processed_cache.contains_key(&cache_key) {
-            console_log("processed cache hit, returning cached image");
+            browser_log("processed cache hit, returning cached image");
             return self.processed_cache.get(&cache_key).unwrap().clone();
         } else {
-            console_log("processed cache miss, processing image");
+            browser_log("processed cache miss, processing image");
             let mut img = self.get_source_data(&band).await;
             if width > 0 && height > 0 {
                 img = DynamicImage::ImageRgba8(resize(&img, width, height, FilterType::Nearest));
@@ -83,10 +83,10 @@ impl Processor {
         let height = height_option.unwrap_or(0);
         let cache_key = Processor::get_processed_cache_key(&None, &histogram_stretch, &width, &height);
         if self.processed_cache.contains_key(&cache_key) {
-            console_log("processed cache hit, returning cached image");
+            browser_log("processed cache hit, returning cached image");
             return self.processed_cache.get(&cache_key).unwrap().clone();
         } else {
-            console_log(&format!("cache miss with {:}", cache_key));
+            browser_log(&format!("cache miss with {:}", cache_key));
             let band_4: DynamicImage = self.get_source_data(&4).await;
             let band_8: DynamicImage = self.get_source_data(&8).await;
             let band_4_grey = Processor::image_to_grey_scale(&band_4);
@@ -116,7 +116,7 @@ impl Processor {
     async fn get_source_data(&mut self, band: &u8) -> DynamicImage {
         let fetch_cache_key = Processor::get_fetch_cache_key(&band);
         if !self.fetch_cache.contains_key(&fetch_cache_key) {
-            console_log("fetch cache miss, fetching image");
+            browser_log("fetch cache miss, fetching image");
             if let Ok(response) = self.http_client
                 .get(&format!("http://localhost:3000/api/T09UXA_20231210T194821?band={:}", band))
                 .header("Authorization", &format!("Bearer {:}", self.jwt.clone().unwrap()))
@@ -133,7 +133,7 @@ impl Processor {
                 wasm_bindgen::throw_str(&format!("error fetching image band {:}", band));
             }
         } else {
-            console_log("fetch cache hit, using cached image");
+            browser_log("fetch cache hit, using cached image");
         }
         self.fetch_cache.get(&fetch_cache_key).unwrap().clone()
     }
@@ -167,24 +167,24 @@ impl Processor {
             if let Some(max_value) = max_value_option {
                 let value_range = max_value - min_value;
                 if value_range > 0 {
-                    console_log(&format!("stretching with min: {:}, max: {:}", min_value, max_value));
+                    browser_log(&format!("stretching with min: {:}, max: {:}", min_value, max_value));
                     for pixel in pixels.iter_mut() {
                         let calculated = ((*pixel as f32) - (*min_value as f32)) / (value_range as f32) * (255 as f32);
                         *pixel = calculated.round() as u8;
                     }
                 } else {
-                    console_log("value range is zero");
+                    browser_log("value range is zero");
                 }
             } else {
-                console_log("unable to determine max non-zero pixel value");
+                browser_log("unable to determine max non-zero pixel value");
             }
         } else {
-            console_log("unable to determine min non-zero pixel value");
+            browser_log("unable to determine min non-zero pixel value");
         }
     }
 
     pub fn clear_processed_cache(&mut self) {
-        console_log(&format!("clearing processed cache"));
+        browser_log(&format!("clearing processed cache"));
         self.processed_cache.clear();
     }
 
