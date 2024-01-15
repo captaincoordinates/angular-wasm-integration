@@ -1,9 +1,12 @@
 $displayBreakpoint: 850px
 
+#full-container
+    font-family: monospace
+
 #display-container
     display: flex
     flex-direction: row
-    margin-top: 0.5em
+    margin: 0.5em
 
     @media (max-width: $displayBreakpoint)
         flex-direction: column
@@ -23,3 +26,11 @@ $displayBreakpoint: 850px
     @media (max-width: $displayBreakpoint)
         flex: 1
         margin-left: 0
+
+#selection-container
+    display: flex
+    flex-direction: row
+    margin: 2em 0 0 0
+
+#selection-image-type-container
+    margin-right: 1em

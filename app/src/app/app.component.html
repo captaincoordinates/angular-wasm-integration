@@ -1,29 +1,35 @@
-<ul>
-  <li>loading indicator</li>
-  <li>explanatory text</li>
-  <li>styling</li>
-</ul>
+<div id="full-container">
+  <h1>Angular / WASM Demo</h1>
 
-<div id="selection-container">
-  <app-image-selection
-    (optionChange)="handleImageSelectionChange($event)"
-    >
-  </app-image-selection>
-  <app-image-stretch-selection
-    (stretchChange)="handleStretchChange($event)"
-    >
-  </app-image-stretch-selection>
-</div>
+  <p>Demo showing a simple use-case for a JavaScript front-end application integrating a WASM component.</p>
 
-<div id="display-container">
-  <div id="display-image-container">
-    <app-image-display
-      [selectedImageOption]="selectedImage"
-      [stretchSelected]="stretchSelected"
-      >
-    </app-image-display>
+  <hr />
+
+  <div id="selection-container">
+    <div id="selection-image-type-container">
+      <app-image-selection
+        (optionChange)="handleImageSelectionChange($event)"
+        >
+      </app-image-selection>
+    </div>
+    <div id="selection-stretch-container">
+      <app-image-stretch-selection
+        (stretchChange)="handleStretchChange($event)"
+        >
+      </app-image-stretch-selection>
+    </div>
   </div>
-  <div id="display-log-container">
-    <app-debug-log></app-debug-log>
+
+  <div id="display-container">
+    <div id="display-image-container">
+      <app-image-display
+        [selectedImageOption]="selectedImage"
+        [stretchSelected]="stretchSelected"
+        >
+      </app-image-display>
+    </div>
+    <div id="display-log-container">
+      <app-debug-log></app-debug-log>
+    </div>
   </div>
 </div>
