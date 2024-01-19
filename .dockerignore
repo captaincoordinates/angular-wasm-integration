@@ -1,0 +1,12 @@
+**/.vscode
+
+api/target
+api/data
+api/.spin
+
+image-processor/target
+image-processor/.github
+
+app/node_modules
+app/.angular
+app/dist

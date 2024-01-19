@@ -35,7 +35,7 @@ impl Processor {
     pub async fn authenticate(&mut self, username: &str, password: &str) {
         browser_log("requesting token from API with user/pass");
         if let Ok(response) = self.http_client
-            .post("http://localhost:3000/api/token")
+            .post(Self::get_endpoint_address("/api/token"))
             .body(json!({
                 "user": username,
                 "pass": password,
@@ -113,12 +113,19 @@ impl Processor {
         }
     }
 
+    fn get_endpoint_address(suffix: &str) -> String {
+        // 3000 is the default port for Fermyon Spin HTTP API
+        let api_base = option_env!("API_BASE").or(Some("http://localhost:3000")).unwrap();
+        browser_log(&format!("API base url: {:}", api_base));
+        format!("{:}{:}", api_base, suffix)
+    }
+
     async fn get_source_data(&mut self, band: &u8) -> DynamicImage {
         let fetch_cache_key = Processor::get_fetch_cache_key(&band);
         if !self.fetch_cache.contains_key(&fetch_cache_key) {
             browser_log("fetch cache miss, fetching image");
             if let Ok(response) = self.http_client
-                .get(&format!("http://localhost:3000/api/T09UXA_20231210T194821?band={:}", band))
+                .get(Self::get_endpoint_address(&format!("/api/T09UXA_20231210T194821?band={:}", band)))
                 .header("Authorization", &format!("Bearer {:}", self.jwt.clone().unwrap()))
                 .send()
                 .await {

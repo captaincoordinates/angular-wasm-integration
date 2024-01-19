@@ -1,0 +1,28 @@
+FROM --platform=$BUILDPLATFORM debian:trixie-slim as builder
+
+ARG DEBIAN_FRONTEND=noninteractive
+RUN apt-get update --fix-missing \
+  && apt-get install -y --no-install-recommends \
+  build-essential \
+  ca-certificates \
+  curl \
+  git \
+  && apt-get clean
+
+RUN curl -fsSL https://developer.fermyon.com/downloads/install.sh | bash -s -- -v v2.0.1
+RUN curl -sSf https://sh.rustup.rs | bash -s -- -y
+ENV PATH="/root/.cargo/bin:${PATH}"
+RUN rustup target add wasm32-wasi
+
+COPY api /api
+WORKDIR /api
+
+RUN /spin build
+
+# ----------
+FROM scratch
+
+COPY --from=builder /api/spin.toml /spin.toml
+COPY --from=builder /api/target/wasm32-wasi/release/api.wasm /target/wasm32-wasi/release/api.wasm
+
+ENTRYPOINT [ "/spin.toml" ]

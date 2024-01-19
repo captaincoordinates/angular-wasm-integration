@@ -1,0 +1,17 @@
+FROM debian:trixie-slim
+
+ARG DEBIAN_FRONTEND=noninteractive
+RUN apt-get update --fix-missing \
+  && apt-get install -y --no-install-recommends \
+  build-essential \
+  ca-certificates \
+  curl \
+  git \
+  && apt-get clean
+
+RUN curl -sSf https://sh.rustup.rs | bash -s -- -y
+ENV PATH="/root/.cargo/bin:${PATH}"
+RUN rustup target add wasm32-unknown-unknown
+RUN cargo install wasm-pack
+
+COPY image-processor /image-processor
